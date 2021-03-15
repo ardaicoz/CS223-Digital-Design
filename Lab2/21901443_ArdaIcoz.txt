@@ -1,0 +1,146 @@
+module fullAdder_behavioral(
+    input logic a, b, cin, 
+    output logic sum, cout);
+    
+    assign sum = cin ^ (a ^ b);
+    assign cout = (a & b) | (cin & (a ^ b));    
+endmodule
+
+module fullAdder_structural(
+    input logic a, b, cin,
+    output logic sum, cout);
+    
+    //full adder wires
+    //p is XOR gate, g is AND gate, e is AND gate
+    logic p, g, e;
+    
+    
+    xor p_xor(p, a, b);
+    and g_and(g, b, a);
+    and e_and(e, p, cin);
+    xor sum_xor(sum, cin, p);
+    or cout_or(cout, g, e);
+endmodule
+
+module fullAdder_structuralTestbench();
+    logic a, b, cin, sum, cout;
+    
+    //instantiate device under test
+    fullAdder_structural dut(a, b, cin, sum, cout);
+    
+    //apply inputs one at a time
+    //checking results
+    initial begin
+        a = 0; b = 0; cin = 0; #10;
+        assert (cout === 0 && sum === 0) else $error("000 failed.");
+        a = 0; b = 0; cin = 1; #10;
+        assert (cout === 0 && sum === 1) else $error("001 failed.");
+        a = 0; b = 1; cin = 0; #10;
+        assert (cout === 0 && sum === 1) else $error("010 failed.");
+        a = 0; b = 1; cin = 1; #10;
+        assert (cout === 1 && sum === 0) else $error("011 failed.");
+        a = 1; b = 0; cin = 0; #10;
+        assert (cout === 0 && sum === 1) else $error("100 failed.");
+        a = 1; b = 0; cin = 1; #10;
+        assert (cout === 1 && sum === 0) else $error("101 failed.");
+        a = 1; b = 1; cin = 0; #10;
+        assert (cout === 1 && sum === 0) else $error("110 failed.");
+        a = 1; b = 1; cin = 1; #10;
+        assert (cout === 1 && sum === 1) else $error("111 failed.");
+    end   
+endmodule
+
+
+module fullSubtractor_structural(
+    input logic a, b, bin,
+    output logic d, bo);
+    
+    //first half subtractor wires
+    //p is XOR gate, g is AND gate, e is NOT gate
+    logic p, g, e;
+    
+    //second half subtractor wires
+    //k is XOR gate, m is AND gate, n is NOT gate
+    logic k, m, n;
+    
+    //first half subtractor
+    xor p_xor(p, a, b);
+    not e_not(e, a);
+    and g_and(g, b, e);
+    
+    //second half subtractor
+    xor k_xor(d, p, bin);
+    not n_not(n, p);
+    and m_and(m, n, bin);
+    
+    //very last AND gate
+    or last_and(bo, g, m);
+endmodule
+
+module fullSubtractor_structuralTestbench();
+    logic a, b, bin, d, bo;
+    
+    //instantiate device under test
+    fullSubtractor_structural dut(a, b, bin, d, bo);
+    
+    //apply inputs one at a time
+    //checking results
+    initial begin
+        a = 0; b = 0; bin = 0; #10;
+        assert (d === 0 && bo === 0) else $error("000 failed.");
+        a = 0; b = 0; bin = 1; #10;
+        assert (d === 1 && bo === 1) else $error("001 failed.");
+        a = 0; b = 1; bin = 0; #10;
+        assert (d === 1 && bo === 1) else $error("010 failed.");
+        a = 0; b = 1; bin = 1; #10;
+        assert (d === 0 && bo === 1) else $error("011 failed.");
+        a = 1; b = 0; bin = 0; #10;
+        assert (d === 1 && bo === 0) else $error("100 failed.");
+        a = 1; b = 0; bin = 1; #10;
+        assert (d === 0 && bo === 0) else $error("101 failed.");
+        a = 1; b = 1; bin = 0; #10;
+        assert (d === 0 && bo === 0) else $error("110 failed.");
+        a = 1; b = 1; bin = 1; #10;
+        assert (d === 1 && bo === 1) else $error("111 failed.");
+    end   
+endmodule
+
+module twobitAdder_structural(
+    input logic cin, a0, b0, a1, b1,
+    output logic sum0, sum1, cout1);
+    
+    //First Full Adder
+    //cout0 is the output of the or gate
+    logic cout0;
+     
+    fullAdder_structural fullAdder0(a0, b0, cin, sum0, cout0);
+    fullAdder_structural fullAdder1(a1, b1, cout0, sum1, cout1); 
+endmodule
+
+module twobitAdder_structuralTestbench();
+    logic cin, a0, b0, a1, b1, sum0, sum1, cout1;
+    
+    //instantiate device under test
+    twobitAdder_structural dut(cin, a0, b0, a1, b1, sum0, sum1, cout1);
+
+    //apply inputs one at a time
+    //checking results
+    initial begin
+        cin = 0; a0 = 0; b0 = 0; a1 = 0;  b1 = 0; #10;
+        assert (sum0 === 0 && sum1 === 0 && cout1 === 0) else $error("0: 000, 1: 00 failed.");        
+        cin = 0; a0 = 1; b0 = 0; a1 = 0;  b1 = 0; #10;
+        assert (sum0 === 1 && sum1 === 0 && cout1 === 0) else $error("0: 010, 1: 00 failed.");        
+        cin = 0; a0 = 0; b0 = 0; a1 = 1;  b1 = 0; #10;
+        assert (sum0 === 0 && sum1 === 1 && cout1 === 0) else $error("0: 000, 1: 10 failed.");       
+        cin = 0; a0 = 1; b0 = 1; a1 = 0;  b1 = 0; #10;
+        assert (sum0 === 0 && sum1 === 1 && cout1 === 0) else $error("0: 011, 1: 00 failed.");       
+        cin = 0; a0 = 0; b0 = 0; a1 = 1;  b1 = 1; #10;
+        assert (sum0 === 0 && sum1 === 0 && cout1 === 1) else $error("0: 000, 1: 11 failed.");       
+        cin = 1; a0 = 0; b0 = 0; a1 = 1;  b1 = 0; #10;
+        assert (sum0 === 1 && sum1 === 1 && cout1 === 0) else $error("0: 100, 1: 10 failed.");        
+        cin = 1; a0 = 1; b0 = 1; a1 = 0;  b1 = 0; #10;
+        assert (sum0 === 1 && sum1 === 1 && cout1 === 0) else $error("0: 111, 1: 00 failed.");       
+        cin = 1; a0 = 1; b0 = 1; a1 = 1;  b1 = 1; #10;
+        assert (sum0 === 1 && sum1 === 1 && cout1 === 1) else $error("0: 111, 1: 11 failed.");
+    end    
+endmodule
